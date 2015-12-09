@@ -6,6 +6,9 @@
 //  Copyright 2009 __MyCompanyName__. All rights reserved.
 //
 
+
+#define test 1
+
 #import "ApplicationDelegate.h"
 
 @interface ApplicationDelegate ()
@@ -23,9 +26,17 @@
 - (id)init {
 	self = [super init];
 	if(self != nil) {
-		self.deviceToken = @"";
+		
 		self.payload = @"{\"aps\":{\"alert\":\"This is some fancy message.\",\"badge\":1}}";
-		self.certificate = [[NSBundle mainBundle] pathForResource:@"apns" ofType:@"cer"];
+        self.deviceToken = @"db93e147 c8ee6a92 718675cb c415d6a4 f090b0d0 e19a3211 585faace ee4b731c";
+        if (test) {
+            self.certificate = [[NSBundle mainBundle] pathForResource:@"developPush" ofType:@"cer"];
+        }
+        else
+        {
+            self.certificate = [[NSBundle mainBundle] pathForResource:@"productPush" ofType:@"cer"];
+        }
+		
 	}
 	return self;
 }
@@ -70,13 +81,23 @@
 	if(self.certificate == nil) {
 		return;
 	}
+    
+    char * sandboxSddress = nil;
+    
+    if (test) {
+        sandboxSddress = "gateway.sandbox.push.apple.com";
+    }
+    else
+    {
+        sandboxSddress = "gateway.push.apple.com";
+    }
 	
 	// Define result variable.
 	OSStatus result;
 	
 	// Establish connection to server.
 	PeerSpec peer;
-	result = MakeServerConnection("gateway.sandbox.push.apple.com", 2195, &socket, &peer);// NSLog(@"MakeServerConnection(): %d", result);
+	result = MakeServerConnection(sandboxSddress, 2195, &socket, &peer);// NSLog(@"MakeServerConnection(): %d", result);
 	
 	// Create new SSL context.
 	result = SSLNewContext(false, &context);// NSLog(@"SSLNewContext(): %d", result);
@@ -88,7 +109,7 @@
 	result = SSLSetConnection(context, socket);// NSLog(@"SSLSetConnection(): %d", result);
 	
 	// Set server domain name.
-	result = SSLSetPeerDomainName(context, "gateway.sandbox.push.apple.com", 30);// NSLog(@"SSLSetPeerDomainName(): %d", result);
+	result = SSLSetPeerDomainName(context, sandboxSddress, 30);// NSLog(@"SSLSetPeerDomainName(): %d", result);
 	
 	// Open keychain.
 	result = SecKeychainCopyDefault(&keychain);// NSLog(@"SecKeychainOpen(): %d", result);
